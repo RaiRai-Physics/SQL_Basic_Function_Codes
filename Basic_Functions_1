@@ -1,0 +1,97 @@
+create table Employees_2023 (
+Employeer_ID INT Primary Key,
+Emplyee_Name Varchar(50),
+Department Varchar(50),
+Salary INT
+)
+
+create table Employees_2024 (
+Employeer_ID INT Primary Key,
+Emplyee_Name Varchar(50),
+Department Varchar(50),
+Salary INT
+)
+
+Insert into Employees_2023 values (1, 'Ravi', 'IT', 50000), (2, 'Hari', 'HR', 60000), (3, 'Shankar', 'Finance', 70000), (4, 'Geeta', 'IT', 90000)
+
+Insert into Employees_2024 values (1, 'Ravi', 'IT', 55000), (5, 'Michael', 'HR', 65000), (3, 'Shankar', 'Finance', 75000), (6, 'Mina', 'Marketing', 95000)
+
+Select * from employees_2023;
+Select * from employees_2024;
+
+-- Upper Function: 
+Select Upper(Emplyee_Name) as Upper_Name from employees_2023;
+
+--Lower Function:
+Select Lower(Emplyee_Name) as Upper_Name from employees_2024;
+
+--Length Function:
+Select Emplyee_name, len(emplyee_name) as character_length from employees_2023;
+
+Select len(emplyee_name) as character_length from employees_2023;
+
+--Round Function:
+Select round(45678.981, 1)
+Select round(45678.9801, 1)
+Select round(45678.98, 2)
+
+Select round(45678.981, -2)
+--Positive number right side of decimal and negative number left side of decimal
+
+--Substring function:
+Select Emplyee_name, substring(emplyee_name,1,4) as character_length from employees_2023;
+
+Select Emplyee_name, substring(emplyee_name,-1,5) as character_length from employees_2023;
+
+--The first number is for the starting position and the second number for the number of characters to display. 
+
+--Union function:
+
+Select * from employees_2023;
+Select * from employees_2024;
+
+select employeer_id from employees_2023 union all select employeer_id from employees_2024;
+
+select employeer_id from employees_2023 union select employeer_id from employees_2024;
+
+select employeer_id,emplyee_name from employees_2023 union all select employeer_id, emplyee_name from employees_2024;
+
+select employeer_id,emplyee_name from employees_2023 union select employeer_id, emplyee_name from employees_2024;
+
+--Union doesn't have duplicates in them, while union all will have duplicates
+
+--Intersect function:
+Select * from employees_2023;
+Select * from employees_2024;
+select employeer_id,emplyee_name from employees_2023 intersect select employeer_id, emplyee_name from employees_2024;
+
+--The intersect function will select common values from the tables
+select employeer_id,emplyee_name,department,salary from employees_2023 intersect select employeer_id, emplyee_name, department,salary from employees_2024;
+
+--Minus function/complement function:
+Select * from employees_2023;
+Select * from employees_2024;
+select employeer_id,emplyee_name from employees_2023 except select employeer_id, emplyee_name from employees_2024;
+select employeer_id,emplyee_name from employees_2024 except select employeer_id, emplyee_name from employees_2023;
+
+--This function will select data which are not present in the second table
+
+--Find the average salary per department:
+Select * from employees_2023;
+
+select department, AVG(salary) as Average_Salary from employees_2023 
+group by department
+
+--Find the average salary per department but with their department displayed too:
+
+
+Select * from employees_2023;
+
+select department, emplyee_name, salary, AVG(salary) OVER(partition by department) as Average_Salary from employees_2023 
+
+Select * from employees_2023;
+
+select department, emplyee_name, AVG(salary) as Average_Salary from employees_2023 
+group by department
+
+--Note the difference between partition by and the group by 
