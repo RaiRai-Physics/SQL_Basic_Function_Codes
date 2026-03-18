@@ -1,0 +1,167 @@
+CREATE DATABASE OrderDB;
+USE OrderDB;
+
+create table Order_UNF(
+OrderID int,
+CustomerName Varchar(100),
+CustomerCity varchar(100),
+Product Varchar(100),
+Supplier Varchar(100),
+SupplierCity Varchar(100)
+);
+
+INSERT INTO Order_UNF values
+(101, 'Ram', 'Delhi', 'Laptop', 'TechCorp', 'Mumbai'),
+(101, 'Ram', 'Delhi', 'Laptop', 'TechCorp', 'Mumbai'),
+(102, 'Dev', 'Mumbai', 'Keyboard', 'InputInc', 'Delhi'),
+(101, 'Ram', 'Delhi', 'Laptop', 'TechCorp', 'Mumbai');
+
+SELECT * from Order_UNF;
+
+SELECT COUNT(*)
+FROM (
+    SELECT DISTINCT *
+    FROM Order_UNF
+) AS DistinctRows;
+
+SELECT DISTINCT * FROM Order_UNF;
+
+update order_unf
+set customercity = 'New Delhi'
+where customername = 'Ram';
+
+SELECT OrderID, COUNT(DISTINCT CustomerName) AS DifferentCustomers
+FROM Order_UNF
+GROUP BY OrderID
+HAVING COUNT(DISTINCT CustomerName) > 1;
+
+/* 1NF creation*/
+CREATE TABLE Order_1NF (
+    OrderID INT,
+    CustomerName VARCHAR(100),
+    CustomerCity VARCHAR(100),
+    Product VARCHAR(100),
+    Supplier VARCHAR(100),
+    SupplierCity VARCHAR(100)
+);
+
+INSERT INTO Order_1NF
+SELECT DISTINCT
+    OrderID,
+    CustomerName,
+    CustomerCity,
+    Product,
+    Supplier,
+    SupplierCity
+FROM Order_UNF;
+
+SELECT * FROM Order_1NF;
+
+/*2NF*/ 
+
+/*(OrderId, Product)*/ 
+
+CREATE TABLE Orders_2NF (
+    OrderID INT PRIMARY KEY,
+    CustomerName VARCHAR(100),
+    CustomerCity VARCHAR(100)
+);
+
+CREATE TABLE Products_2NF (
+    Product VARCHAR(100) PRIMARY KEY,
+    Supplier VARCHAR(100),
+    SupplierCity VARCHAR(100)
+);
+
+CREATE TABLE OrderDetails_2NF (
+    OrderID INT,
+    Product VARCHAR(100),
+    PRIMARY KEY (OrderID, Product),
+    FOREIGN KEY (OrderID) REFERENCES Orders_2NF(OrderID),
+    FOREIGN KEY (Product) REFERENCES Products_2NF(Product)
+);
+
+INSERT INTO Orders_2NF (OrderID, CustomerName, CustomerCity)
+SELECT DISTINCT OrderID, CustomerName, CustomerCity
+FROM Order_1NF;
+
+INSERT INTO Products_2NF (Product, Supplier, SupplierCity)
+SELECT DISTINCT Product, Supplier, SupplierCity
+FROM Order_1NF;
+
+INSERT INTO OrderDetails_2NF (OrderID, Product)
+SELECT DISTINCT OrderID, Product
+FROM Order_1NF;
+
+SELECT * FROM Orders_2NF;
+/*3NF */
+
+CREATE TABLE Customers (
+    CustomerID INT IDENTITY(1,1) PRIMARY KEY,
+    CustomerName VARCHAR(100) UNIQUE,
+    CustomerCity VARCHAR(100)
+);
+
+CREATE TABLE Suppliers (
+    SupplierID INT IDENTITY(1,1) PRIMARY KEY,
+    SupplierName VARCHAR(100) UNIQUE,
+    SupplierCity VARCHAR(100)
+);
+
+CREATE TABLE Products (
+    ProductID INT IDENTITY(1,1) PRIMARY KEY,
+    ProductName VARCHAR(100) UNIQUE,
+    SupplierID INT,
+    FOREIGN KEY (SupplierID) REFERENCES Suppliers(SupplierID)
+);
+
+CREATE TABLE Orders (
+    OrderID INT PRIMARY KEY,
+    CustomerID INT,
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID)
+);
+
+CREATE TABLE OrderItems (
+    OrderID INT,
+    ProductID INT,
+    PRIMARY KEY (OrderID, ProductID),
+    FOREIGN KEY (OrderID) REFERENCES Orders(OrderID),
+    FOREIGN KEY (ProductID) REFERENCES Products(ProductID)
+);
+
+INSERT INTO Customers (CustomerName, CustomerCity)
+SELECT DISTINCT CustomerName, CustomerCity
+FROM Order_1NF;
+
+INSERT INTO Suppliers (SupplierName, SupplierCity)
+SELECT DISTINCT Supplier, SupplierCity
+FROM Order_1NF;
+
+INSERT INTO Products (ProductName, SupplierID)
+SELECT DISTINCT
+    o.Product,
+    s.SupplierID
+FROM Order_1NF o
+JOIN Suppliers s
+    ON o.Supplier = s.SupplierName
+   AND o.SupplierCity = s.SupplierCity;
+
+INSERT INTO Orders (OrderID, CustomerID)
+SELECT DISTINCT
+    o.OrderID,
+    c.CustomerID
+FROM Order_1NF o
+JOIN Customers c
+    ON o.CustomerName = c.CustomerName
+   AND o.CustomerCity = c.CustomerCity;
+
+INSERT INTO OrderItems (OrderID, ProductID)
+SELECT DISTINCT
+    o.OrderID,
+    p.ProductID
+FROM Order_1NF o
+JOIN Products p
+    ON o.Product = p.ProductName;
+
+SELECT * FROM OrderItems;
+SELECT * FROM Orders;
