@@ -1,0 +1,163 @@
+-- 5NF (Fifth Normal Form) example in one SQL script
+-- Scenario:
+-- A Supplier can supply a Part
+-- A Supplier can work on a Project
+-- A Project can require a Part
+
+-- =========================================================
+-- 1) MASTER TABLES
+-- =========================================================
+
+CREATE TABLE Suppliers (
+    supplier_id INT PRIMARY KEY,
+    supplier_name VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE Parts (
+    part_id INT PRIMARY KEY,
+    part_name VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE Projects (
+    project_id INT PRIMARY KEY,
+    project_name VARCHAR(50) NOT NULL
+);
+
+INSERT INTO Suppliers (supplier_id, supplier_name) VALUES
+(1, 'Alpha Supplies'),
+(2, 'Beta Traders');
+
+INSERT INTO Parts (part_id, part_name) VALUES
+(101, 'Bolt'),
+(102, 'Nut');
+
+INSERT INTO Projects (project_id, project_name) VALUES
+(1001, 'Bridge'),
+(1002, 'Tower');
+
+-- =========================================================
+-- 2) NON-5NF TABLE
+-- =========================================================
+-- This table stores the full triple relationship directly.
+-- It may contain redundancy due to join dependency.
+
+CREATE TABLE Supplier_Part_Project_Not5NF (
+    supplier_id INT,
+    part_id INT,
+    project_id INT,
+    PRIMARY KEY (supplier_id, part_id, project_id),
+    FOREIGN KEY (supplier_id) REFERENCES Suppliers(supplier_id),
+    FOREIGN KEY (part_id) REFERENCES Parts(part_id),
+    FOREIGN KEY (project_id) REFERENCES Projects(project_id)
+);
+
+INSERT INTO Supplier_Part_Project_Not5NF (supplier_id, part_id, project_id) VALUES
+(1, 101, 1001),
+(1, 101, 1002),
+(1, 102, 1001),
+(1, 102, 1002),
+(2, 101, 1001);
+
+-- View original non-5NF data
+SELECT * 
+FROM Supplier_Part_Project_Not5NF
+ORDER BY supplier_id, part_id, project_id;
+
+-- =========================================================
+-- 3) FORMAL IDEA OF 5NF
+-- =========================================================
+-- A relation R(Supplier, Part, Project) is in 5NF if every
+-- non-trivial join dependency is implied by candidate keys.
+--
+-- Here:
+-- R(Supplier, Part, Project)
+--
+-- can be decomposed into:
+-- R1(Supplier, Part)
+-- R2(Supplier, Project)
+-- R3(Part, Project)
+--
+-- such that:
+-- R = R1 JOIN R2 JOIN R3
+--
+-- So we decompose the non-5NF table into 3 tables.
+
+-- =========================================================
+-- 4) 5NF DECOMPOSITION
+-- =========================================================
+
+CREATE TABLE Supplier_Part (
+    supplier_id INT,
+    part_id INT,
+    PRIMARY KEY (supplier_id, part_id),
+    FOREIGN KEY (supplier_id) REFERENCES Suppliers(supplier_id),
+    FOREIGN KEY (part_id) REFERENCES Parts(part_id)
+);
+
+CREATE TABLE Supplier_Project (
+    supplier_id INT,
+    project_id INT,
+    PRIMARY KEY (supplier_id, project_id),
+    FOREIGN KEY (supplier_id) REFERENCES Suppliers(supplier_id),
+    FOREIGN KEY (project_id) REFERENCES Projects(project_id)
+);
+
+CREATE TABLE Part_Project (
+    part_id INT,
+    project_id INT,
+    PRIMARY KEY (part_id, project_id),
+    FOREIGN KEY (part_id) REFERENCES Parts(part_id),
+    FOREIGN KEY (project_id) REFERENCES Projects(project_id)
+);
+
+-- =========================================================
+-- 5) INSERT DATA INTO 5NF TABLES
+-- =========================================================
+
+INSERT INTO Supplier_Part (supplier_id, part_id) VALUES
+(1, 101),
+(1, 102),
+(2, 101);
+
+INSERT INTO Supplier_Project (supplier_id, project_id) VALUES
+(1, 1001),
+(1, 1002),
+(2, 1001);
+
+INSERT INTO Part_Project (part_id, project_id) VALUES
+(101, 1001),
+(101, 1002),
+(102, 1001),
+(102, 1002);
+
+-- View decomposed tables
+SELECT * FROM Supplier_Part ORDER BY supplier_id, part_id;
+SELECT * FROM Supplier_Project ORDER BY supplier_id, project_id;
+SELECT * FROM Part_Project ORDER BY part_id, project_id;
+
+-- =========================================================
+-- 6) RECONSTRUCT ORIGINAL DATA USING JOIN
+-- =========================================================
+
+SELECT
+    sp.supplier_id,
+    sp.part_id,
+    sj.project_id
+FROM Supplier_Part sp
+JOIN Supplier_Project sj
+    ON sp.supplier_id = sj.supplier_id
+JOIN Part_Project pj
+    ON sp.part_id = pj.part_id
+   AND sj.project_id = pj.project_id
+ORDER BY sp.supplier_id, sp.part_id, sj.project_id;
+
+-- =========================================================
+-- 7) CONCLUSION
+-- =========================================================
+-- The table Supplier_Part_Project_Not5NF is decomposed into:
+--   Supplier_Part
+--   Supplier_Project
+--   Part_Project
+--
+-- This removes redundancy caused by join dependency.
+-- Therefore, the decomposed schema is in 5NF.
