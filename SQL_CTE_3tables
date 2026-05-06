@@ -1,0 +1,76 @@
+WITH Customers AS (
+    SELECT 1 AS customer_id, 'Alice' AS customer_name, 'New York' AS city
+    UNION ALL
+    SELECT 2, 'Bob', 'Chicago'
+    UNION ALL
+    SELECT 3, 'Charlie', 'Dallas'
+    UNION ALL
+    SELECT 4, 'Diana', 'Chicago'
+    UNION ALL
+    SELECT 5, 'Ethan', 'New York'
+),
+
+Products AS (
+    SELECT 101 AS product_id, 'Laptop' AS product_name, 'Electronics' AS category, 1000 AS price
+    UNION ALL
+    SELECT 102, 'Headphones', 'Electronics', 200
+    UNION ALL
+    SELECT 103, 'Office Chair', 'Furniture', 300
+    UNION ALL
+    SELECT 104, 'Desk', 'Furniture', 500
+    UNION ALL
+    SELECT 105, 'Notebook', 'Stationery', 20
+),
+
+Orders AS (
+    SELECT 1001 AS order_id, 1 AS customer_id, 101 AS product_id, 1 AS quantity
+    UNION ALL
+    SELECT 1002, 1, 102, 2
+    UNION ALL
+    SELECT 1003, 2, 103, 3
+    UNION ALL
+    SELECT 1004, 2, 104, 1
+    UNION ALL
+    SELECT 1005, 3, 105, 10
+    UNION ALL
+    SELECT 1006, 4, 101, 1
+    UNION ALL
+    SELECT 1007, 4, 103, 2
+    UNION ALL
+    SELECT 1008, 5, 104, 2
+),
+
+city_category_sales AS (
+    SELECT
+        c.city,
+        p.category,
+        SUM(o.quantity * p.price) AS total_sales
+    FROM Orders o
+    JOIN Customers c
+        ON o.customer_id = c.customer_id
+    JOIN Products p
+        ON o.product_id = p.product_id
+    GROUP BY
+        c.city,
+        p.category
+),
+
+ranked_categories AS (
+    SELECT
+        city,
+        category,
+        total_sales,
+        ROW_NUMBER() OVER (
+            PARTITION BY city
+            ORDER BY total_sales DESC
+        ) AS rank_num
+    FROM city_category_sales
+)
+
+SELECT
+    city,
+    category,
+    total_sales
+FROM ranked_categories
+WHERE rank_num = 1
+ORDER BY city;
